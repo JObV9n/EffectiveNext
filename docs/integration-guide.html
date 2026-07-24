@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>effectiveNext — Integration Guide</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #09090b;
+            --surface: #18181b;
+            --surface-hover: #27272a;
+            --border: #27272a;
+            --text: #fafafa;
+            --text-muted: #a1a1aa;
+            --accent: #3b82f6;
+            --accent-dim: #1e3a5f;
+            --green: #22c55e;
+            --green-dim: #14532d;
+            --yellow: #eab308;
+            --yellow-dim: #422006;
+            --red: #ef4444;
+            --red-dim: #450a0a;
+            --orange: #f97316;
+            --orange-dim: #431407;
+            --code-bg: #0f0f11;
+            --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Menlo, Consolas, monospace;
+            --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            font-size: 15px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 32px 24px;
+            border-right: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .sidebar-brand {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-brand span { color: var(--accent); }
+
+        .sidebar-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+
+        .sidebar-section {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin: 24px 0 8px;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 6px 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+
+        .sidebar a:hover {
+            color: var(--text);
+            background: var(--surface-hover);
+        }
+
+        .sidebar a.active {
+            color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        /* Main */
+        .main {
+            max-width: 840px;
+            padding: 48px 56px 96px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 16px;
+            margin-bottom: 48px;
+        }
+
+        h2 {
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin: 56px 0 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 32px 0 12px;
+        }
+
+        p { margin-bottom: 16px; color: var(--text-muted); }
+
+        /* Code */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 20px;
+            overflow-x: auto;
+            margin: 16px 0 24px;
+            font-family: var(--mono);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        code {
+            font-family: var(--mono);
+            font-size: 13px;
+        }
+
+        p code, li code, td code, .inline-code {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .comment { color: #52525b; }
+        .keyword { color: #c084fc; }
+        .string { color: #34d399; }
+        .func { color: #60a5fa; }
+        .type { color: #fbbf24; }
+        .flag { color: #f97316; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0 24px;
+            font-size: 14px;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px 12px;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        tr:hover td { background: var(--surface-hover); }
+
+        /* Lists */
+        ul, ol {
+            padding-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            margin-bottom: 6px;
+            color: var(--text-muted);
+        }
+
+        li strong { color: var(--text); }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.02em;
+        }
+
+        .badge-green { background: var(--green-dim); color: var(--green); }
+        .badge-yellow { background: var(--yellow-dim); color: var(--yellow); }
+        .badge-blue { background: var(--accent-dim); color: var(--accent); }
+        .badge-red { background: var(--red-dim); color: var(--red); }
+        .badge-orange { background: var(--orange-dim); color: var(--orange); }
+
+        /* Callouts */
+        .callout {
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0 24px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .callout-title {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .callout-info {
+            background: var(--accent-dim);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .callout-info .callout-title { color: var(--accent); }
+
+        .callout-warn {
+            background: var(--yellow-dim);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+        .callout-warn .callout-title { color: var(--yellow); }
+
+        .callout-success {
+            background: var(--green-dim);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        .callout-success .callout-title { color: var(--green); }
+
+        .callout-error {
+            background: var(--red-dim);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .callout-error .callout-title { color: var(--red); }
+
+        /* Steps */
+        .step {
+            display: grid;
+            grid-template-columns: 32px 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .step-content p {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+            margin: 16px 0 24px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .card-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .card-value {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .card-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            font-family: var(--sans);
+        }
+
+        .tab:hover { color: var(--text); }
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Separator */
+        hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 48px 0;
+        }
+
+        [id] { scroll-margin-top: 24px; }
+
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                width: 260px;
+                z-index: 100;
+                transition: left 0.2s;
+            }
+            .sidebar.open { left: 0; }
+            .main { padding: 32px 24px 80px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-brand"><span>Go</span>Fast</div>
+            <div class="sidebar-sub">Integration Guide</div>
+
+            <div class="sidebar-section">Setup</div>
+            <a href="#overview">Overview</a>
+            <a href="#new-project">New Project</a>
+            <a href="#existing-project">Existing Project</a>
+            <a href="#legacy-project">Legacy Project</a>
+
+            <div class="sidebar-section">Configuration</div>
+            <a href="#config-reference">Config Reference</a>
+            <a href="#profiles">Profiles</a>
+            <a href="#ignore-patterns">Ignore Patterns</a>
+
+            <div class="sidebar-section">Advanced</div>
+            <a href="#monorepo">Monorepo</a>
+            <a href="#custom-cache">Custom Cache</a>
+            <a href="#ci-cd">CI/CD</a>
+            <a href="#docker">Docker</a>
+
+            <div class="sidebar-section">Reference</div>
+            <a href="#supported-features">Supported Features</a>
+            <a href="#troubleshooting">Troubleshooting</a>
+            <a href="#faq">FAQ</a>
+        </nav>
+
+        <main class="main">
+            <h1>Integration Guide</h1>
+            <p class="subtitle">Add effectiveNext to any Next.js project — new, existing, or legacy.</p>
+
+            <!-- Overview -->
+            <section id="overview">
+                <h2>Overview</h2>
+                <p>effectiveNext wraps <code>next build</code> and <code>next dev</code> with a preprocessing layer that scans files, builds a dependency graph, caches parser output, and tracks changes. You don't modify your source code — effectiveNext sits in front of Next.js.</p>
+
+                <div class="callout callout-info">
+                    <div class="callout-title">&#9432; Zero source changes required</div>
+                    effectiveNext reads your existing <code>next.config.js</code>, <code>tsconfig.json</code>, and <code>package.json</code>. No configuration changes needed to start.
+                </div>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-label">Install time</div>
+                        <div class="card-value">&lt; 30s</div>
+                        <div class="card-desc">Single binary, no deps</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-label">Config required</div>
+                        <div class="card-value">None</div>
+                        <div class="card-desc">Sensible defaults</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-label">Source changes</div>
+                        <div class="card-value">Zero</div>
+                        <div class="card-desc">Drop-in replacement</div>
+                    </div>
+                </div>
+            </section>
+
+            <hr>
+
+            <!-- New Project -->
+            <section id="new-project">
+                <h2>New Project</h2>
+                <p>Setting up effectiveNext in a fresh Next.js project.</p>
+
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h4>Create your Next.js app</h4>
+                        <pre><code>npx create-next-app@latest my-app
+cd my-app</code></pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h4>Install effectiveNext</h4>
+                        <pre><code><span class="comment"># From source</span>
+git clone https://github.com/effective-next-dev/effective-next.git /tmp/effective-next
+cd /tmp/effective-next && go build -o /usr/local/bin/effective-next ./cmd/effective-next
+
+<span class="comment"># Or via go install</span>
+go install github.com/effective-next-dev/effective-next/cmd/effective-next@latest</code></pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h4>Verify environment</h4>
+                        <pre><code>cd ~/my-app
+effective-next doctor</code></pre>
+                        <p>Expected output:</p>
+                        <pre><code>effective-next: Environment Check
+  [PASS] Go version: 1.24+
+  [PASS] Node.js: v20.x.x
+  [PASS] Package manager: npm
+  [PASS] Next.js: 14.x.x
+  [PASS] next.config.js found
+  [PASS] Project directory: /home/user/my-app</code></pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <h4>Build</h4>
+                        <pre><code>effective-next build</code></pre>
+                        <p>effectiveNext preprocesses your project, then invokes <code>next build</code>.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-num">5</div>
+                    <div class="step-content">
+                        <h4>Start dev server</h4>
+                        <pre><code>effective-next dev</code></pre>
+                        <p>Replaces <code>next dev</code> with faster incremental rebuilds.</p>
+                    </div>
+                </div>
+
+                <div class="callout callout-success">
+                    <div class="callout-title">&#10003; Done</div>
+                    Your project now uses effectiveNext. Add <code>effective-next build</code> to your deployment scripts.
+                </div>
+            </section>
+
+            <hr>
+
+            <!-- Existing Project -->
+            <section id="existing-project">
+                <h2>Existing Project</h2>
+                <p>Migrating an active Next.js project to effectiveNext.</p>
+
+                <h3>Step 1: Check Compatibility</h3>
+                <pre><code>effective-next doctor</code></pre>
+                <p>Ensure all checks pass. Common issues:</p>
+                <table>
+                    <thead><tr><th>Check</th><th>Fix</th></tr></thead>
+                    <tbody>
+                        <tr><td>Node.js not found</td><td>Install Node.js 18+</td></tr>
+                        <tr><td>Next.js not found</td><td>Run <code>npm install</code></td></tr>
+                        <tr><td>next.config missing</td><td>Create <code>next.config.js</code></td></tr>
+                    </tbody>
+                </table>
+
+                <h3>2: Analyze Your Project</h3>
+                <pre><code>effective-next analyze</code></pre>
+                <p>This shows file counts, dependency graph stats, routes, and circular dependencies — without modifying anything.</p>
+
+                <h3>3: Dry Run</h3>
+                <pre><code>effective-next build --dry-run</code></pre>
+                <p>Preview the preprocessing pipeline without invoking <code>next build</code>.</p>
+
+                <h3>4: First Build</h3>
+                <pre><code>effective-next build</code></pre>
+                <p>The first build is a cold build. Subsequent builds are faster due to caching.</p>
+
+                <h3>5: Update Scripts</h3>
+                <p>Replace <code>next build</code> in your <code>package.json</code>:</p>
+                <pre><code>{
+  "scripts": {
+    "build": "effective-next build",
+    "dev": "effective-next dev",
+    "start": "next start"
+  }
+}</code></pre>
+
+                <div class="callout callout-info">
+                    <div class="callout-title">&#9432; No breaking changes</div>
+                    effectiveNext invokes <code>next build</code> internally. Your existing CI/CD, deployment, and <code>next start</code> commands continue to work.
+                </div>
+            </section>
+
+            <hr>
+
+            <!-- Legacy Project -->
+            <section id="legacy-project">
+                <h2>Legacy Project</h2>
+                <p>Older Next.js projects (12.x, 13.x) or projects with custom Webpack configurations.</p>
+
+                <h3>Supported Legacy Versions</h3>
+                <table>
+                    <thead><tr><th>Next.js</th><th>Status</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>14.x</td><td><span class="badge badge-green">Full</span></td><td>App Router + Pages Router</td></tr>
+                        <tr><td>13.x</td><td><span class="badge badge-yellow">Best-effort</span></td><td>App Router may have edge cases</td></tr>
+                        <tr><td>12.x</td><td><span class="badge badge-orange">Partial</span></td><td>Pages Router only, no App Router</td></tr>
+                        <tr><td>&lt; 12</td><td><span class="badge badge-red">Unsupported</span></td><td>Use <code>next build</code> directly</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Webpack Projects</h3>
+                <p>effectiveNext does not replace Webpack. It preprocesses files before Next.js runs Webpack. Custom Webpack configs in <code>next.config.js</code> continue to work.</p>
+
+                <pre><code><span class="comment">// next.config.js — works with effectiveNext</span>
+module.exports = {
+  webpack: (config) => {
+    config.resolve.alias['@'] = './src'
+    return config
+  },
+  experimental: {
+    appDir: true
+  }
+}</code></pre>
+
+                <h3>Pages Router Only</h3>
+                <p>If your project uses only <code>pages/</code> (no <code>app/</code> directory), effectiveNext detects this automatically:</p>
+                <pre><code>effective-next analyze
+<span class="comment"># Routes:         24
+# App Router:     false
+# Pages Router:   true</span></code></pre>
+
+                <h3>Migrating from CRA / Vite / Other</h3>
+                <p>If you're migrating to Next.js and want to use effectiveNext:</p>
+                <ol>
+                    <li>Complete your Next.js migration first</li>
+                    <li>Verify <code>next build</code> works standalone</li>
+                    <li>Then add effectiveNext in front</li>
+                </ol>
+
+                <div class="callout callout-warn">
+                    <div class="callout-title">&#9888; effectiveNext does not replace Next.js</div>
+                    effectiveNext is a preprocessing accelerator. You still need a working Next.js project.
+                </div>
+            </section>
+
+            <hr>
+
+            <!-- Config Reference -->
+            <section id="config-reference">
+                <h2>Configuration Reference</h2>
+                <p>effectiveNext works with zero configuration. These options let you tune behavior.</p>
+
+                <h3>Config File Locations (auto-discovered)</h3>
+                <table>
+                    <thead><tr><th>Priority</th><th>File</th><th>Format</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td><code>effective-next.yaml</code></td><td>YAML</td></tr>
+                        <tr><td>2</td><td><code>effective-next.yml</code></td><td>YAML</td></tr>
+                        <tr><td>3</td><td><code>effective-next.json</code></td><td>JSON</td></tr>
+                        <tr><td>4</td><td><code>package.json</code> (effective-next key)</td><td>JSON</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Full Config Example</h3>
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab(event, 'yaml')">YAML</button>
+                    <button class="tab" onclick="showTab(event, 'json')">JSON</button>
+                    <button class="tab" onclick="showTab(event, 'pkgjson')">package.json</button>
+                </div>
+
+                <div id="yaml" class="tab-content active">
+                    <pre><code><span class="comment"># effective-next.yaml</span>
+
+<span class="comment"># Number of worker goroutines (auto = all CPU cores)</span>
+workers: auto
+
+cache:
+  <span class="comment"># Enable/disable binary caching</span>
+  enabled: true
+  <span class="comment"># Compression algorithm: zstd, gzip, none</span>
+  compression: zstd
+  <span class="comment"># Maximum cache size in MB (0 = unlimited)</span>
+  maxSizeMB: 25600
+  <span class="comment"># Cache directory (relative to project root)</span>
+  dir: .effective-next/cache
+
+scanner:
+  <span class="comment"># Directories to skip during scanning</span>
+  ignore:
+    - node_modules
+    - .next
+    - .git
+    - dist
+    - coverage
+    - out
+    - .vercel
+    - .effective-next
+
+watch:
+  <span class="comment"># Enable file watching in dev mode</span>
+  enabled: true
+  <span class="comment"># Debounce interval in milliseconds</span>
+  debounceMs: 100
+
+optimization:
+  <span class="comment"># Enable asset optimization (hashing, dedup)</span>
+  assets: true
+  <span class="comment"># Enable CSS dependency tracking</span>
+  css: true
+
+<span class="comment"># Preset: default, ci, low-memory, desktop</span>
+profile: default</code></pre>
+                </div>
+
+                <div id="json" class="tab-content">
+                    <pre><code>{
+  "workers": "auto",
+  "cache": {
+    "enabled": true,
+    "compression": "zstd",
+    "maxSizeMB": 25600,
+    "dir": ".effective-next/cache"
+  },
+  "scanner": {
+    "ignore": ["node_modules", ".next", ".git", "dist"]
+  },
+  "watch": {
+    "enabled": true,
+    "debounceMs": 100
+  },
+  "optimization": {
+    "assets": true,
+    "css": true
+  },
+  "profile": "default"
+}</code></pre>
+                </div>
+
+                <div id="pkgjson" class="tab-content">
+                    <pre><code>{
+  "name": "my-next-app",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "effective-next build",
+    "dev": "effective-next dev",
+    "start": "next start"
+  },
+  "effective-next": {
+    "workers": 8,
+    "cache": {
+      "enabled": true,
+      "compression": "zstd"
+    },
+    "optimization": {
+      "assets": true,
+      "css": true
+    }
+  },
+  "dependencies": {
+    "next": "14.2.0",
+    "react": "^18"
+  }
+}</code></pre>
+                </div>
+
+                <h3>Config Values</h3>
+                <table>
+                    <thead><tr><th>Key</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>workers</code></td><td>int | "auto"</td><td>auto</td><td>Number of worker goroutines</td></tr>
+                        <tr><td><code>cache.enabled</code></td><td>bool</td><td>true</td><td>Enable binary caching</td></tr>
+                        <tr><td><code>cache.compression</code></td><td>string</td><td>zstd</td><td>Compression: zstd, gzip, none</td></tr>
+                        <tr><td><code>cache.maxSizeMB</code></td><td>int</td><td>25600</td><td>Max cache size in MB</td></tr>
+                        <tr><td><code>cache.dir</code></td><td>string</td><td>.effective-next/cache</td><td>Cache directory path</td></tr>
+                        <tr><td><code>scanner.ignore</code></td><td>string[]</td><td>see below</td><td>Directories to skip</td></tr>
+                        <tr><td><code>watch.enabled</code></td><td>bool</td><td>true</td><td>Enable file watcher</td></tr>
+                        <tr><td><code>watch.debounceMs</code></td><td>int</td><td>100</td><td>Debounce interval (ms)</td></tr>
+                        <tr><td><code>optimization.assets</code></td><td>bool</td><td>true</td><td>Asset hashing and dedup</td></tr>
+                        <tr><td><code>optimization.css</code></td><td>bool</td><td>true</td><td>CSS dependency tracking</td></tr>
+                        <tr><td><code>profile</code></td><td>string</td><td>default</td><td>Config preset name</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <hr>
+
+            <!-- Profiles -->
+            <section id="profiles">
+                <h2>Profiles</h2>
+                <p>Presets for different environments.</p>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-value">default</div>
+                        <div class="card-desc">Balanced settings for most machines. Auto-detects CPU count.</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-value">ci</div>
+                        <div class="card-desc">Fixed worker count, caching enabled, no watch. Predictable for CI/CD.</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-value">low-memory</div>
+                        <div class="card-desc">Reduced workers (2 or NumCPU/2), 5 GB cache limit. For constrained environments.</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-value">desktop</div>
+                        <div class="card-desc">Maximum parallelism. Uses all CPU cores. Best for developer machines.</div>
+                    </div>
+                </div>
+
+                <pre><code><span class="comment"># effective-next.yaml</span>
+profile: ci
+
+<span class="comment"># Or via CLI flag (not available — use config file)</span></code></pre>
+            </section>
+
+            <!-- Ignore Patterns -->
+            <section id="ignore-patterns">
+                <h2>Ignore Patterns</h2>
+                <p>effectiveNext skips these directories by default:</p>
+
+                <table>
+                    <thead><tr><th>Directory</th><th>Reason</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>node_modules</code></td><td>Third-party dependencies</td></tr>
+                        <tr><td><code>.next</code></td><td>Next.js build output</td></tr>
+                        <tr><td><code>.git</code></td><td>Version control</td></tr>
+                        <tr><td><code>dist</code></td><td>Build output</td></tr>
+                        <tr><td><code>coverage</code></td><td>Test coverage reports</td></tr>
+                        <tr><td><code>out</code></td><td>Static export output</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Add Custom Ignore Patterns</h3>
+                <pre><code><span class="comment"># effective-next.yaml</span>
+scanner:
+  ignore:
+    - node_modules
+    - .next
+    - .git
+    - dist
+    - coverage
+    - out
+    - .vercel
+    - tmp
+    - __tests__
+    - __mocks__</code></pre>
+            </section>
+
+            <hr>
+
+            <!-- Monorepo -->
+            <section id="monorepo">
+                <h2>Monorepo Support</h2>
+                <p>effectiveNext works in monorepo setups (Turborepo, pnpm workspaces, Nx).</p>
+
+                <h3>Per-Package Setup</h3>
+                <p>Run effectiveNext from each Next.js package root:</p>
+                <pre><code><span class="comment"># Turborepo structure</span>
+packages/
+  web/              <span class="comment"># Next.js app</span>
+    effective-next.yaml
+    next.config.js
+    app/
+  ui/               <span class="comment"># Shared library (not Next.js)</span>
+  docs/             <span class="comment"># Another Next.js app</span>
+    effective-next.yaml
+    next.config.js
+    app/</code></pre>
+
+                <pre><code><span class="comment"># In each Next.js package</span>
+cd packages/web
+effective-next build
+
+cd packages/docs
+effective-next build</code></pre>
+
+                <h3>Turborepo Integration</h3>
+                <pre><code>{
+  "scripts": {
+    "build": "turbo run build"
+  },
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", ".effective-next/**"]
+    }
+  }
+}</code></pre>
+
+                <h3>Shared Cache</h3>
+                <p>Point all packages to a shared cache directory:</p>
+                <pre><code><span class="comment"># packages/web/effective-next.yaml</span>
+cache:
+  dir: ../../.effective-next-cache
+
+<span class="comment"># packages/docs/effective-next.yaml</span>
+cache:
+  dir: ../../.effective-next-cache</code></pre>
+
+                <div class="callout callout-info">
+                    <div class="callout-title">&#9432; Separate build databases</div>
+                    Each package gets its own <code>.effective-next/build.db</code> since dependency graphs differ per package.
+                </div>
+            </section>
+
+            <!-- Custom Cache -->
+            <section id="custom-cache">
+                <h2>Custom Cache Location</h2>
+                <p>Store the cache on a fast disk or shared volume:</p>
+                <pre><code><span class="comment"># effective-next.yaml</span>
+cache:
+  dir: /mnt/ssd/effective-next-cache
+  maxSizeMB: 51200  <span class="comment"># 50 GB on fast SSD</span></code></pre>
+
+                <h3>Cache in Git (optional)</h3>
+                <p>Some teams commit the cache for faster CI:</p>
+                <pre><code><span class="comment"># .gitignore</span>
+.effective-next/build.db
+.effective-next/cache/*.zst
+<span class="comment"># Keep manifest.json for CI speedup</span></code></pre>
+            </section>
+
+            <!-- CI/CD -->
+            <section id="ci-cd">
+                <h2>CI/CD Integration</h2>
+
+                <h3>GitHub Actions</h3>
+                <pre><code><span class="comment"># .github/workflows/build.yml</span>
+name: Build
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm ci
+
+      - name: Install effectiveNext
+        run: go install ./cmd/effective-next
+
+      - name: Build
+        run: effective-next build --workers 4</code></pre>
+
+                <h3>GitLab CI</h3>
+                <pre><code><span class="comment"># .gitlab-ci.yml</span>
+build:
+  image: golang:1.24-node20
+  script:
+    - npm ci
+    - go install ./cmd/effective-next
+    - effective-next build --workers 4
+  cache:
+    paths:
+      - .effective-next/
+      - node_modules/</code></pre>
+
+                <h3>Vercel</h3>
+                <pre><code><span class="comment"># vercel.json</span>
+{
+  "buildCommand": "effective-next build",
+  "installCommand": "npm install && go install ./cmd/effective-next"
+}</code></pre>
+
+                <h3>Cache in CI</h3>
+                <p>Cache the <code>.effective-next/</code> directory between CI runs:</p>
+                <pre><code><span class="comment"># GitHub Actions cache</span>
+- uses: actions/cache@v4
+  with:
+    path: .effective-next
+    key: effective-next-${{ hashFiles('**/*.ts', '**/*.tsx') }}
+    restore-keys: effective-next-</code></pre>
+
+                <div class="callout callout-success">
+                    <div class="callout-title">&#10003; CI builds are faster</div>
+                    With <code>.effective-next/</code> cached, incremental CI builds skip scanning and parsing unchanged files.
+                </div>
+            </section>
+
+            <!-- Docker -->
+            <section id="docker">
+                <h2>Docker</h2>
+
+                <h3>Multi-Stage Build</h3>
+                <pre><code><span class="comment"># Build stage</span>
+FROM golang:1.24 AS effective-next
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -o /effective-next ./cmd/effective-next
+
+<span class="comment"># Application stage</span>
+FROM node:20-slim
+WORKDIR /app
+COPY --from=effective-next /effective-next /usr/local/bin/
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN effective-next build --workers 4
+EXPOSE 3000
+CMD ["next", "start"]</code></pre>
+
+                <h3>With Cache Mount</h3>
+                <pre><code>RUN --mount=type=cache,target=/app/.effective-next effective-next build</code></pre>
+            </section>
+
+            <hr>
+
+            <!-- Supported Features -->
+            <section id="supported-features">
+                <h2>Supported Features</h2>
+
+                <h3>Next.js Features</h3>
+                <table>
+                    <thead><tr><th>Feature</th><th>Status</th></tr></thead>
+                    <tbody>
+                        <tr><td>App Router (<code>app/</code>)</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Pages Router (<code>pages/</code>)</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Server Components</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Client Components (<code>'use client'</code>)</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Server Actions (<code>'use server'</code>)</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Dynamic Routes (<code>[slug]</code>)</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Catch-all Routes (<code>[...slug]</code>)</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Route Groups (<code>(auth)</code>)</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Parallel Routes</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Intercepting Routes</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Middleware</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>API Routes</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Layouts</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Templates</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Error Boundaries</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Loading States</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>Metadata API</td><td><span class="badge badge-green">Supported</span></td></tr>
+                        <tr><td>OpenGraph Images</td><td><span class="badge badge-green">Supported</span></td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Language Support</h3>
+                <table>
+                    <thead><tr><th>Language</th><th>Parser</th></tr></thead>
+                    <tbody>
+                        <tr><td>TypeScript (.ts)</td><td><span class="badge badge-green">SWC + Regex</span></td></tr>
+                        <tr><td>TSX (.tsx)</td><td><span class="badge badge-green">SWC + Regex</span></td></tr>
+                        <tr><td>JavaScript (.js)</td><td><span class="badge badge-green">SWC + Regex</span></td></tr>
+                        <tr><td>JSX (.jsx)</td><td><span class="badge badge-green">SWC + Regex</span></td></tr>
+                        <tr><td>CSS / SCSS / SASS</td><td><span class="badge badge-green">Regex</span></td></tr>
+                        <tr><td>JSON</td><td><span class="badge badge-green">Native</span></td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Ecosystem</h3>
+                <table>
+                    <thead><tr><th>Tool</th><th>Status</th></tr></thead>
+                    <tbody>
+                        <tr><td>Tailwind CSS</td><td><span class="badge badge-green">Detected</span></td></tr>
+                        <tr><td>PostCSS</td><td><span class="badge badge-green">Detected</span></td></tr>
+                        <tr><td>SCSS / SASS</td><td><span class="badge badge-green">Tracked</span></td></tr>
+                        <tr><td>Turborepo</td><td><span class="badge badge-green">Compatible</span></td></tr>
+                        <tr><td>pnpm</td><td><span class="badge badge-green">Compatible</span></td></tr>
+                        <tr><td>Yarn</td><td><span class="badge badge-green">Compatible</span></td></tr>
+                        <tr><td>npm</td><td><span class="badge badge-green">Compatible</span></td></tr>
+                        <tr><td>LightningCSS</td><td><span class="badge badge-green">Detected</span></td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Platforms</h3>
+                <table>
+                    <thead><tr><th>OS</th><th>Status</th></tr></thead>
+                    <tbody>
+                        <tr><td>Linux</td><td><span class="badge badge-green">Full</span></td></tr>
+                        <tr><td>macOS</td><td><span class="badge badge-green">Full</span></td></tr>
+                        <tr><td>Windows</td><td><span class="badge badge-green">Full</span></td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <hr>
+
+            <!-- Troubleshooting -->
+            <section id="troubleshooting">
+                <h2>Troubleshooting</h2>
+
+                <table>
+                    <thead><tr><th>Problem</th><th>Solution</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><code>effective-next: command not found</code></td>
+                            <td>Add Go bin to PATH: <code>export PATH=$PATH:$(go env GOPATH)/bin</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>next binary not found</code></td>
+                            <td>Run <code>npm install</code> in project root</td>
+                        </tr>
+                        <tr>
+                            <td><code>failed to open build database</code></td>
+                            <td>Run <code>effective-next clean --all</code> to reset</td>
+                        </tr>
+                        <tr>
+                            <td><code>sqlite3: unknown driver</code></td>
+                            <td>Enable CGO: <code>export CGO_ENABLED=1</code></td>
+                        </tr>
+                        <tr>
+                            <td>Build slower than expected</td>
+                            <td>Run <code>effective-next doctor</code>, check <code>effective-next cache stats</code></td>
+                        </tr>
+                        <tr>
+                            <td>Watch not detecting changes</td>
+                            <td>Check inotify limits: <code>cat /proc/sys/fs/inotify/max_user_watches</code></td>
+                        </tr>
+                        <tr>
+                            <td>Cache growing too large</td>
+                            <td>Set <code>cache.maxSizeMB</code> in config</td>
+                        </tr>
+                        <tr>
+                            <td>Port already in use</td>
+                            <td>Use <code>effective-next dev -p 3001</code></td>
+                        </tr>
+                        <tr>
+                            <td>TypeScript errors during build</td>
+                            <td>Run <code>tsc --noEmit</code> first to check types</td>
+                        </tr>
+                        <tr>
+                            <td>Monorepo: graph is incomplete</td>
+                            <td>Run effectiveNext from each Next.js package root separately</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Debug Commands</h3>
+                <pre><code><span class="comment"># Full diagnostics</span>
+effective-next doctor
+
+<span class="comment"># Verbose build output</span>
+effective-next build --verbose
+
+<span class="comment"># Cache statistics</span>
+effective-next cache stats
+
+<span class="comment"># Dependency analysis</span>
+effective-next analyze
+
+<span class="comment"># Export dependency graph</span>
+effective-next graph -f json -o deps.json
+
+<span class="comment"># Inspect SQLite directly</span>
+sqlite3 .effective-next/build.db ".tables"
+sqlite3 .effective-next/build.db "SELECT COUNT(*) FROM files"
+sqlite3 .effective-next/build.db "SELECT * FROM history ORDER BY id DESC LIMIT 5"</code></pre>
+            </section>
+
+            <hr>
+
+            <!-- FAQ -->
+            <section id="faq">
+                <h2>FAQ</h2>
+
+                <h3>Does effectiveNext replace Next.js?</h3>
+                <p>No. effectiveNext preprocesses files and invokes <code>next build</code> / <code>next dev</code> internally. Your app is still built by Next.js.</p>
+
+                <h3>Do I need to change my source code?</h3>
+                <p>No. effectiveNext reads your existing files. No imports, routes, or configuration changes required.</p>
+
+                <h3>Will my Vercel / Netlify deployment still work?</h3>
+                <p>Yes. Set your build command to <code>effective-next build</code> in your deployment config. effectiveNext invokes <code>next build</code> which produces standard output.</p>
+
+                <h3>What if SWC is not installed?</h3>
+                <p>effectiveNext falls back to a regex-based parser automatically. Install <code>@swc/cli</code> for faster parsing.</p>
+
+                <h3>Does it work with React Server Components?</h3>
+                <p>Yes. effectiveNext detects <code>'use client'</code> and <code>'use server'</code> directives. It tracks Server Components, Client Components, and Server Actions.</p>
+
+                <h3>How much disk does the cache use?</h3>
+                <p>Typically 50-200 MB for medium projects. Set <code>cache.maxSizeMB</code> to limit growth.</p>
+
+                <h3>Can I use it with Turborepo?</h3>
+                <p>Yes. Run effectiveNext in each Next.js package. Cache the <code>.effective-next/</code> directory between runs.</p>
+
+                <h3>Does it support Yarn / pnpm?</h3>
+                <p>Yes. effectiveNext detects the package manager automatically via <code>effective-next doctor</code>.</p>
+
+                <h3>What happens on the first build?</h3>
+                <p>First builds are cold — everything is scanned and parsed from scratch. Subsequent builds reuse the cache for faster incremental updates.</p>
+
+                <h3>Is it safe for production?</h3>
+                <p>Yes. effectiveNext does not modify source files. It only writes to <code>.effective-next/</code> (cache and database). Running <code>effective-next clean --all</code> removes all effectiveNext state.</p>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        // Sidebar active link
+        const links = document.querySelectorAll('.sidebar a');
+        const sections = [];
+        links.forEach(link => {
+            const id = link.getAttribute('href')?.slice(1);
+            if (id) {
+                const el = document.getElementById(id);
+                if (el) sections.push({ id, el, link });
+            }
+        });
+
+        function updateActive() {
+            let current = sections[0];
+            for (const s of sections) {
+                if (s.el.getBoundingClientRect().top <= 100) current = s;
+            }
+            links.forEach(l => l.classList.remove('active'));
+            if (current) current.link.classList.add('active');
+        }
+
+        window.addEventListener('scroll', updateActive, { passive: true });
+        updateActive();
+
+        // Tabs
+        function showTab(e, id) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById(id).classList.add('active');
+        }
+    </script>
+</body>
+</html>

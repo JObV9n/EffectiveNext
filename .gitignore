@@ -1,0 +1,34 @@
+# Binaries
+bin/
+effective-next
+*.exe
+
+# effectiveNext state
+.effective-next/
+.effective-next-cache/
+
+# Go
+vendor/
+*.test
+*.out
+coverage.html
+coverage.txt
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Node.js
+node_modules/
+.next/
+dist/
+out/
+coverage/
+
+# Temporary
+tmp/
+temp/
