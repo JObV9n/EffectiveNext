@@ -32,3 +32,14 @@ coverage/
 # Temporary
 tmp/
 temp/
+files
+
+#AI Agents
+.opencode
+.claude
+.gemini
+.kimi
+.nim
+rules*
+opencode*
+AGENTS*
